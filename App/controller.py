@@ -29,6 +29,8 @@ import tracemalloc
 """
 El controlador se encarga de mediar entre la vista y el modelo.
 """
+csv.field_size_limit(2147483647)
+Route = "small-"
 
 
 def new_controller():
@@ -36,18 +38,63 @@ def new_controller():
     Crea una instancia del modelo
     """
     #TODO: Llamar la función del modelo que crea las estructuras de datos
-    pass
+    control = {'model': None}
+    control['model'] = model.new_catalog()
+    return control
 
 
 # Funciones para la carga de datos
 
-def load_data(control, filename):
+def load_data(control, memflag = True):
     """
     Carga los datos del reto
     """
     # TODO: Realizar la carga de datos
-    pass
+    catalog = control['model']
+    
+    start_time = get_time()
+    if memflag is True:
+        tracemalloc.start()
+        start_memory = get_memory()
+        
+    load_data_jobs(catalog)
+    
+    stop_time = get_time()
+    deltaTime = delta_time(start_time, stop_time)
+    # finaliza el proceso para medir memoria
+    if memflag is True:
+        stop_memory = get_memory()
+        tracemalloc.stop()
+        # calcula la diferencia de memoria
+        deltaMemory = delta_memory(stop_memory, start_memory)
+        # respuesta con los datos de tiempo y memoria
+        return deltaTime, deltaMemory
 
+    else:
+        # respuesta sin medir memoria
+        return deltaTime
+    
+def load_data_jobs(catalog):
+    """
+    Carga los datos del reto
+    """
+    # TODO: Realizar la carga de datos
+    file = cf.data_dir+ 'data/' + Route + 'jobs.csv'
+    input_file = csv.DictReader(open(file, encoding='utf-8'), restval= 'Desconocido', delimiter= ";")
+    for row in input_file:
+        model.add_data_jobs(catalog, row)
+        
+    catalog['Trabajos'] = model.sort(catalog['Trabajos'], model.cmp_fecha_empresa)
+    
+    
+def set_data_size(SizeOp):
+    """
+    Configura que csv se utilizara para la carga de datos
+    """
+    ans = model.select_data_size(SizeOp)
+    DataSize = ans[0]
+    data_msg = ans[1]
+    return data_msg, DataSize
 
 # Funciones de ordenamiento
 
@@ -169,3 +216,5 @@ def delta_memory(stop_memory, start_memory):
     # de Byte -> kByte
     delta_memory = delta_memory/1024.0
     return delta_memory
+
+

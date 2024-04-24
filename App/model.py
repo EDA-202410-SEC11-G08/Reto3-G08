@@ -29,7 +29,7 @@ import config as cf
 from DISClib.ADT import list as lt
 from DISClib.ADT import stack as st
 from DISClib.ADT import queue as qu
-from DISClib.ADT import map as mp
+from DISClib.ADT import map as m
 from DISClib.ADT import minpq as mpq
 from DISClib.ADT import indexminpq as impq
 from DISClib.ADT import orderedmap as om
@@ -39,6 +39,8 @@ from DISClib.Algorithms.Sorting import insertionsort as ins
 from DISClib.Algorithms.Sorting import selectionsort as se
 from DISClib.Algorithms.Sorting import mergesort as merg
 from DISClib.Algorithms.Sorting import quicksort as quk
+from DISClib.Algorithms.Sorting import customsort as cus
+import datetime
 assert cf
 
 """
@@ -49,24 +51,121 @@ dos listas, una para los videos, otra para las categorias de los mismos.
 # Construccion de modelos
 
 
-def new_data_structs():
+def new_catalog():
     """
     Inicializa las estructuras de datos del modelo. Las crea de
     manera vacía para posteriormente almacenar la información.
     """
     #TODO: Inicializar las estructuras de datos
-    pass
+    catalog = {'Trabajos': None,
+               'mapa_id': None,
+               'dateIndex': None,
+               'habilidades_id': None,
+               'habilidades_name': None,
+               'employment_types_id': None,
+               'multilocations_id': None,}
+    
+    # Lista con todos los trabajos encontrados en el archivo de carga
+    catalog['Trabajos'] = lt.newList('ARRAY_LIST', compareJobIds)
+    catalog['dateIndex'] = om.newMap(omaptype='RBT',
+                                     cmpfunction=compareDates)
+    catalog['mapa_id']
+
+
+    # EStructuras de datos para guardar info del csv skills
+    catalog["habilidades_id"] = m.newMap(10000,
+                                          maptype="CHAINING",
+                                          loadfactor = 4) 
+    # EStructuras de datos para guardar info del csv emlpoyment types
+    catalog['employment_types_id'] = m.newMap(10000,
+                                               maptype = "CHAINING",
+                                               loadfactor = 4)
+    catalog['salary_min'] = om.newMap(omaptype='RBT',
+                                      cmpfunction=compareSalary)
+    
+    # EStructuras de datos para guardar info del csv multilocation
+    catalog['multilocations_id'] = m.newMap(10000,
+                                               maptype = "CHAINING",
+                                               loadfactor = 4)
+    return catalog
 
 
 # Funciones para agregar informacion al modelo
 
-def add_data(data_structs, data):
+def add_data_jobs(catalog, job):
     """
     Función para agregar nuevos elementos a la lista
     """
     #TODO: Crear la función para agregar elementos a una lista
-    pass
+    lt.addLast(catalog['Trabajos'], job)
+    update_date_index(catalog['dateIndex'], job)
+    return catalog
 
+def update_date_index(map, job):
+    """
+    Se toma la fecha del trabajo y se busca si ya existe en el arbol
+    dicha fecha.  Si es asi, se adiciona a su lista de crimenes
+    y se actualiza el indice de tipos de crimenes.
+
+    Si no se encuentra creado un nodo para esa fecha en el arbol
+    se crea y se actualiza el indice de tipos de crimenes
+    """
+    fecha = job["published_at"]
+    fecha_f = datetime.datetime.strptime(fecha, "%Y-%m-%dT%H:%M:%S.%fZ")
+    entry = om.get(map, fecha_f.date())
+    if entry is None:
+        datentry = new_data_entry(job)
+        om.put(map, fecha_f.date(), datentry)
+    else:
+        datentry = me.getValue(entry)
+    add_date_index(datentry, job)
+    return map
+
+def add_date_index(datentry, job):
+    """
+    Actualiza un indice de tipo de crimenes.  Este indice tiene una lista
+    de crimenes y una tabla de hash cuya llave es el tipo de crimen y
+    el valor es una lista con los crimenes de dicho tipo en la fecha que
+    se está consultando (dada por el nodo del arbol)
+    """
+    lst = datentry["lstjobs"]
+    lt.addLast(lst, job)
+    cityIndex = datentry["cityIndex"]
+    cityentry = m.get(cityIndex, job["city"])
+    if (cityentry is None):
+        entry = new_city_entry(job["city"], job)
+        lt.addLast(entry["lstcity"], job) #
+        m.put(cityIndex, job["city"], entry)
+    else:
+        entry = me.getValue(cityentry)
+        lt.addLast(entry["lstcity"], job) #
+    return datentry
+
+def new_data_entry(job):
+    """
+    Crea una entrada en el indice por fechas, es decir en el arbol
+    binario.
+    """
+    entry = {"lstjobs": None,
+             "cityIndex": None, 
+             "countryIndex": None}
+    entry["cityIndex"] = m.newMap(numelements=30,
+                                     maptype="PROBING",
+                                     cmpfunction=compareOffenses)
+    entry["lstjobs"] = lt.newList("ARRAY_LIST", compareDates)
+    lt.addLast(entry["lstjobs"], job)
+    return entry
+
+def new_city_entry(city, job):
+    """
+    Crea una entrada en el indice por tipo de crimen, es decir en
+    la tabla de hash, que se encuentra en cada nodo del arbol.
+    """
+    entry = {"city": None, "lstcity": None}
+    entry["city"] = city
+    entry["lstcity"] = lt.newList("SINGLE_LINKED", compareDates)
+    lt.addLast(entry["lstcity"], job)
+    return entry
 
 # Funciones para creacion de datos
 
@@ -159,6 +258,63 @@ def req_8(data_structs):
     # TODO: Realizar el requerimiento 8
     pass
 
+def select_data_size(algo_opt):
+    """
+    Función para escoger el tipo de archivo con el que se ejecuta el programa
+    """
+    #Rta por defecto
+    DataSize = 10
+    Sizemsg = "Se escogió por defecto la opción 10 - small"
+    
+    if algo_opt == 1:
+        DataSize = "10-por-"
+        Sizemsg = "Se ha escogido el tamaño 10-por"
+        
+    elif algo_opt == 2:
+        DataSize = "20-por-"
+        Sizemsg = "Se ha escogido el tamaño 20-por"
+
+    elif algo_opt == 3:
+        DataSize = "30-por-"
+        Sizemsg = "Se ha escogido el tamaño 30-por"
+
+    elif algo_opt == 4:
+        DataSize = "40-por-"
+        Sizemsg = "Se ha escogido el tamaño 40-por"
+        
+    elif algo_opt == 5:
+        DataSize = "50-por-"
+        Sizemsg = "Se ha escogido el tamaño 50-por"
+        
+    elif algo_opt == 6:
+        DataSize = "60-por-"
+        Sizemsg = "Se ha escogido el tamaño 60-por"
+        
+    elif algo_opt == 7:
+        DataSize = "70-por-"
+        Sizemsg = "Se ha escogido el tamaño 70-por"
+        
+    elif algo_opt == 8:
+        DataSize = "80-por-"
+        Sizemsg = "Se ha escogido el tamaño 80-por"
+        
+    elif algo_opt == 9:
+        DataSize = "90-por-"
+        Sizemsg = "Se ha escogido el tamaño 90-por"
+        
+    elif algo_opt == 10:
+        DataSize = "small-"
+        Sizemsg = "Se ha escogido el tamaño small-"
+        
+    elif algo_opt == 11:
+        DataSize = "medium-"
+        Sizemsg = "Se ha escogido el tamaño medium-"
+        
+    elif algo_opt == 12:
+        DataSize = "large-"
+        Sizemsg = "Se ha escogido el tamaño large-"
+    return DataSize, Sizemsg
+
 
 # Funciones utilizadas para comparar elementos dentro de una lista
 
@@ -168,6 +324,51 @@ def compare(data_1, data_2):
     """
     #TODO: Crear función comparadora de la lista
     pass
+
+def compareJobIds(id1, id2):
+    """
+    Compara dos ids de dos trabajos
+    """
+    if (id1 == id2):
+        return 0
+    elif id1 > id2:
+        return 1
+    else:
+        return -1
+    
+def compareDates(date1, date2):
+    """
+    Compara dos fechas
+    """
+    if (date1 == date2):
+        return 0
+    elif (date1 > date2):
+        return 1
+    else:
+        return -1
+
+def compareSalary(date1, date2):
+    """
+    Compara dos fechas
+    """
+    if (date1 == date2):
+        return 0
+    elif (date1 > date2):
+        return 1
+    else:
+        return -1
+
+def compareOffenses(offense1, offense2):
+    """
+    Compara dos tipos de crimenes
+    """
+    offense = me.getKey(offense2)
+    if (offense1 == offense):
+        return 0
+    elif (offense1 > offense):
+        return 1
+    else:
+        return -1
 
 # Funciones de ordenamiento
 
@@ -186,9 +387,18 @@ def sort_criteria(data_1, data_2):
     pass
 
 
-def sort(data_structs):
+def sort(list, cmp):
     """
     Función encargada de ordenar la lista con los datos
     """
     #TODO: Crear función de ordenamiento
-    pass
+    return cus.sort(list, cmp)
+
+def cmp_fecha_empresa(oferta1, oferta2): #Criterio ordenamiento RQ 5 - Fecha mayor a menor, si igual, nombre de empresa de A-Z
+    if (datetime.datetime.strptime(oferta1["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ") > datetime.datetime.strptime(oferta2["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ")):
+        return True
+    elif (datetime.datetime.strptime(oferta1["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ") == datetime.datetime.strptime(oferta2["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ")):
+        if (oferta1["company_name"] <= oferta2["company_name"]):
+            return True
+        else: return False
+    else: return False
