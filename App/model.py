@@ -184,7 +184,9 @@ def get_data(data_structs, id):
     Retorna un dato a partir de su ID
     """
     #TODO: Crear la función para obtener un dato de una lista
-    pass
+    oferta=om.get(data_structs["mapa_id"],id)
+    return oferta
+    
 
 
 def data_size(data_structs):
@@ -192,15 +194,19 @@ def data_size(data_structs):
     Retorna el tamaño de la lista de datos
     """
     #TODO: Crear la función para obtener el tamaño de una lista
-    pass
+    return om.size(data_structs[""])
 
 
-def req_1(data_structs):
+def req_1(data_structs, fechaI, fechaF):
     """
     Función que soluciona el requerimiento 1
     """
     # TODO: Realizar el requerimiento 1
-    pass
+    contador= 0
+    lst=om.values(data_structs["dateIndex"], fechaI, fechaF)
+    for lstdate in lt.iterator(lst):
+        contador=+lt.size(lstdate["lstjobs"])
+    return contador
 
 
 def req_2(data_structs):

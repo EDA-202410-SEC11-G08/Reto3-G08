@@ -25,7 +25,7 @@ import model
 import time
 import csv
 import tracemalloc
-
+import datetime
 """
 El controlador se encarga de mediar entre la vista y el modelo.
 """
@@ -116,12 +116,17 @@ def get_data(control, id):
     pass
 
 
-def req_1(control):
+def req_1(analyzer,initialDate, finalDate):
     """
     Retorna el resultado del requerimiento 1
     """
     # TODO: Modificar el requerimiento 1
-    pass
+    initialDate = datetime.datetime.strptime(initialDate, "%Y-%m-%d")
+    finalDate = datetime.datetime.strptime(finalDate, "%Y-%m-%d")
+    
+    respuesta=model.req_1(analyzer, initialDate.date(),finalDate.date())
+    return respuesta
+    
 
 
 def req_2(control):
