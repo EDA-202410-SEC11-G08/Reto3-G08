@@ -25,6 +25,8 @@ import model
 import time
 import csv
 import tracemalloc
+import datetime
+
 
 """
 El controlador se encarga de mediar entre la vista y el modelo.
@@ -58,6 +60,7 @@ def load_data(control, memflag = True):
         start_memory = get_memory()
         
     load_data_jobs(catalog)
+    load_skills(catalog)
     
     stop_time = get_time()
     deltaTime = delta_time(start_time, stop_time)
@@ -87,6 +90,15 @@ def load_data_jobs(catalog):
     catalog['Trabajos'] = model.sort(catalog['Trabajos'], model.cmp_fecha_empresa)
     
     
+def load_skills(catalog):
+    """
+    Cargar csv habilidades
+    """
+    file = cf.data_dir+ 'data/' + Route + 'skills.csv'
+    input_file = csv.DictReader(open(file, encoding='utf-8'), restval= 'Desconocido', delimiter= ";")
+    for row in input_file:
+        model.add_skills(catalog, row)
+            
 def set_data_size(SizeOp):
     """
     Configura que csv se utilizara para la carga de datos
@@ -116,12 +128,43 @@ def get_data(control, id):
     pass
 
 
-def req_1(control):
+def req_1(control, initialDate, finalDate, memflag = True):
     """
-    Retorna el resultado del requerimiento 1
+    Retorna trabajos en el rango de fechas
     """
     # TODO: Modificar el requerimiento 1
-    pass
+    catalog = control['model']
+    
+    # Inicio de mediciones
+    start_time = get_time()
+    if memflag is True:
+        tracemalloc.start()
+        start_memory = get_memory()
+    
+    
+    initialDate = datetime.datetime.strptime(initialDate, "%Y-%m-%d")
+    finalDate = datetime.datetime.strptime(finalDate, "%Y-%m-%d")
+    ans = model.req_1(catalog, initialDate.date(), finalDate.date())
+    control["model"] = ans[0]
+    size = ans[1] 
+    
+    # Finalización de mediciones
+    stop_time = get_time()
+    deltaTime = delta_time(start_time, stop_time)
+    
+    # finaliza el proceso para medir memoria
+    if memflag is True:
+        stop_memory = get_memory()
+        tracemalloc.stop()
+        # calcula la diferencia de memoria
+        deltaMemory = delta_memory(stop_memory, start_memory)
+        # respuesta con los datos de tiempo y memoria
+        return control, size, deltaTime, deltaMemory
+
+    else:
+        # respuesta sin medir memoria
+        return control, size, deltaTime
+
 
 
 def req_2(control):

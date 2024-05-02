@@ -69,7 +69,11 @@ def new_catalog():
     catalog['Trabajos'] = lt.newList('ARRAY_LIST', compareJobIds)
     catalog['dateIndex'] = om.newMap(omaptype='RBT',
                                      cmpfunction=compareDates)
-    catalog['mapa_id']
+    catalog['sizeIndex'] = om.newMap(omaptype='RBT',
+                                     cmpfunction=compareSizes)
+    catalog['mapa_id'] = m.newMap(300000,
+                                  maptype='PROBING',
+                                  loadfactor=0.7)
 
 
     # EStructuras de datos para guardar info del csv skills
@@ -167,6 +171,36 @@ def new_city_entry(city, job):
     lt.addLast(entry["lstcity"], job)
     return entry
 
+def add_skills(catalog, skill):
+    add_skills_id(catalog, skill['id'], skill)
+    
+def add_skills_id(catalog, id, skill):
+    skills = catalog['habilidades_id']
+    existid = m.contains(skills, id)
+    if existid:
+        entry = m.get(skills, id)
+        skillid = me.getValue(entry)
+    else:
+        skillid = new_skill_id(id)
+        m.put(skills, id, skillid)
+    lt.addLast(skillid['row'],skill)
+    
+    skillid['sum'] += int(skill['level'])
+    skillid['size'] += 1
+    skillid['avg'] = int(skillid['sum'])/int(skillid['size'])
+
+def new_skill_id(id):
+    skill_id = {'id': "",
+                "row": None, #Columnas enteras con el id - name;level;id
+                'sum': 0, #Suma de los niveles de las habilidades
+                'size': 0, # conteo de numero de habilidades
+                'avg': 0 #Promedio de habilidades
+                }
+
+    skill_id['id'] = id
+    skill_id['row'] = lt.newList('ARRAY_LIST')
+    return skill_id
+
 # Funciones para creacion de datos
 
 def new_data(id, info):
@@ -195,12 +229,33 @@ def data_size(data_structs):
     pass
 
 
-def req_1(data_structs):
+def req_1(catalog, initialDate, finalDate):
     """
-    Función que soluciona el requerimiento 1
+    Retorna el numero de crimenes en un rago de fechas.
     """
     # TODO: Realizar el requerimiento 1
-    pass
+    names = []
+    lst = om.values(catalog["dateIndex"], initialDate, finalDate)
+    lst_flt = lt.newList('ARRAY_LIST', compareDates) #REVISAR CON Y SIN CMP - BUSCAR CAMBIOS EN FECHAS
+    skills_flt = lt.newList('ARRAY_LIST')
+    for lstdate in lt.iterator(lst):
+        for job in lt.iterator(lstdate['lstjobs']):
+            lt.addLast(lst_flt, job)
+        
+    size = lt.size(lst_flt)
+    
+    if lst_flt != 0:
+        lst_flt = sa.sort(lst_flt, cmp_fecha_empresa) # REVISAR ALGORITMO DE SORT
+    
+    for job in lt.iterator(lst_flt):
+        skill_map = me.getValue(m.get(catalog['habilidades_id'],job['id']))
+        for row in lt.iterator(skill_map['row']):
+            names.append(row['name'])
+        lt.addLast(skills_flt, names)
+        names = []  
+    catalog['REQ1'] = [lst_flt, skills_flt]
+
+    return catalog, size
 
 
 def req_2(data_structs):
@@ -337,6 +392,17 @@ def compareJobIds(id1, id2):
         return -1
     
 def compareDates(date1, date2):
+    """
+    Compara dos fechas
+    """
+    if (date1 == date2):
+        return 0
+    elif (date1 > date2):
+        return 1
+    else:
+        return -1
+    
+def compareSizes(date1, date2): # COMPLETAR
     """
     Compara dos fechas
     """

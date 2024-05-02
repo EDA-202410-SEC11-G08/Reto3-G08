@@ -79,12 +79,52 @@ def print_data(control, id):
     #TODO: Realizar la función para imprimir un elemento
     pass
 
-def print_req_1(control):
+def print_req_1(lst, size):
     """
         Función que imprime la solución del Requerimiento 1 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 1
-    pass
+    table = []
+    header = ['Publicacion','Titulo','Empresa','Experiencia','Pais', 'Ciudad', 'Tamano','Ubicacion', 'Habilidades']
+    table.append(header)
+    
+    if size == 0:
+        imp1 = []
+        print("No se encontraron trabajos en el rango de fechas dado")
+    elif size <= 10:
+        imp1 = lst[0]
+        cont1 = 1   
+    else: 
+        imp1 = lt.subList(lst[0], 1, 5)
+        cont1 = 1
+        imp2 = lt.subList(lst[0], size-4,5)
+        cont2 = size-4
+        
+    for job in lt.iterator(imp1):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              lt.getElement(lst[1],cont1)])
+                cont1 += 1
+                
+    for job in lt.iterator(imp2):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              lt.getElement(lst[1],cont2)])
+                cont2 += 1
+    
+    return table    
 
 
 def print_req_2(control):
@@ -233,7 +273,7 @@ if __name__ == "__main__":
             ans = load_data(control, memflag=mem)
             printLoadDataAnswer(ans)
             # Cantidad de datos guardados ---------------------------------------------------------
-            print('Ofertas cargadas: ' + str(controller.jobs_id_size(control))) 
+            print('Ofertas cargadas: ' + str('controller.jobs_size(control)')) # Poner tamano
             #print('Libros cargados: ' + str(controller.skills_size(control))) 
             #print('Libros cargados: ' + str(controller.employment_size(control))) 
             #print('Libros cargados: ' + str(controller.multilocation_size(control))) 
@@ -246,8 +286,21 @@ if __name__ == "__main__":
             print(tabulate(table2))   
             
         elif int(inputs) == 2:
-            print_req_1(control)
-
+            print("\nBuscando ofertas laborales en un rango de fechas: ")
+            initialDate = input("Fecha Inicial (YYYY-MM-DD): ")
+            finalDate = input("Fecha Final (YYYY-MM-DD): ")
+            
+            ans = controller.req_1(control, initialDate, finalDate, memflag = mem)
+            control = ans[0]
+            req1size = ans[1]
+            
+            print("Tiempo [ms]: ", f"{ans[2]:.3f}")
+            if (mem == True): print("Memoria [kB]: ", f"{ans[3]:.3f}")    
+                               
+            print("Se filtraron y organizaron", req1size, "ofertas")                
+            table = print_req_1(control['model']['REQ1'], req1size)             
+            print(tabulate(table))
+            
         elif int(inputs) == 3:
             print_req_2(control)
 
