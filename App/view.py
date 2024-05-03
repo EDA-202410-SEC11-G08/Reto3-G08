@@ -79,35 +79,93 @@ def print_data(control, id):
     #TODO: Realizar la función para imprimir un elemento
     pass
 
-def print_req_1(control):
+def print_req_1(lst, size):
     """
         Función que imprime la solución del Requerimiento 1 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 1
-    print("\nBuscando ofertas en un rango de fechas: ")
-    initialDate = input("Fecha Inicial (YYYY-MM-DD): ")
-    finalDate = input("Fecha Final (YYYY-MM-DD): ")
-    total = controller.req_1(control, initialDate, finalDate)
-    print("\nTotal de ofertas pulicadas en el rango de fechas: " + str(total))
-    if total > 10: 
-        num = total
-        table1, table2 = printTableJobs(control["model"]["Trabajos"], int(10))
-        print('Primeras ' + str(10) + " Ofertas")
-        print(tabulate(table1))
-        print('Ultimas ' + str(10) + " Ofertas")
-        print(tabulate(table2))   
-    else:
-        num =total
-        table3=printTableJobs1(control["model"]["Trabajos"], int(num))
-        print(table3)
-            
+    table = []
+    header = ['Publicacion','Titulo','Empresa','Experiencia','Pais', 'Ciudad', 'Tamano','Ubicacion', 'Habilidades']
+    table.append(header)
+    
+    if size == 0:
+        imp1 = []
+        print("No se encontraron trabajos en el rango de fechas dado")
+    elif size <= 10:
+        imp1 = lst
+    else: 
+        imp1 = lt.subList(lst, 1, 5)
+        imp2 = lt.subList(lst, size-4,5)
+        
+    for job in lt.iterator(imp1):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['habilidades']])
+                
+    for job in lt.iterator(imp2):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['habilidades']])
+    
+    return table    
 
-def print_req_2(control):
+
+def print_req_2(lst, size):
     """
         Función que imprime la solución del Requerimiento 2 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 2
-    pass
+    table = []
+    header = ['Publicacion','Titulo','Empresa','Experiencia','Pais', 'Ciudad', 'Tamano','Ubicacion', 'Salario min', 'Habilidades']
+    table.append(header)
+    
+    if size == 0:
+        imp1 = []
+        print("No se encontraron trabajos en el rango de fechas dado")
+    elif size <= 10:
+        imp1 = lst
+    else: 
+        imp1 = lt.subList(lst, 1, 5)
+        imp2 = lt.subList(lst, size-4,5)
+        
+    for job in lt.iterator(imp1):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['salary_from'],
+                              job['habilidades']])
+                
+    for job in lt.iterator(imp2):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['salary_from'],
+                              job['habilidades']])
+    
+    return table  
+    
 
 
 def print_req_3(control):
@@ -115,7 +173,20 @@ def print_req_3(control):
         Función que imprime la solución del Requerimiento 3 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 3
-    pass
+    num=input("Ingrese el número de ofertas que quiera consultar: ")
+    print("\nBuscando ofertas más recientes para un país teniendo en cuenta un país en específico: ")
+    codPais = input("Ingrese el código del país: ")
+    experticia = input("Ingrese el nivel de experticia(junior, mid, senior, indiferente): ")
+    total,_ = controller.req_3(control,codPais,experticia,int(num))
+    
+    print("\nTotal de ofertas pulicadas: " + str(total))
+     
+    table1, table2 = printTableJobs(control["model"]["Trabajos"], int(10))
+    print('Primeras ' + str(10) + " Ofertas")
+    print(tabulate(table1))
+    print('Ultimas ' + str(10) + " Ofertas")
+    print(tabulate(table2))   
+    
 
 
 def print_req_4(control):
@@ -123,24 +194,96 @@ def print_req_4(control):
         Función que imprime la solución del Requerimiento 4 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 4
-    pass
+    num=input("Ingrese el número de ofertas que quiera consultar: ")
+    print("\nBuscando ofertas más recientes para un país teniendo en cuenta un país en específico: ")
+    codPais = input("Ingrese el código del país: ")
+    experticia = input("Ingrese el nivel de experticia(junior, mid, senior, indiferente): ")
+    total,_ = controller.req_3(control,codPais,experticia,int(num))
+    
+    print("\nTotal de ofertas pulicadas: " + str(total))
+     
+    table1, table2 = printTableJobs(control["model"]["Trabajos"], int(10))
+    print('Primeras ' + str(10) + " Ofertas")
+    print(tabulate(table1))
+    print('Ultimas ' + str(10) + " Ofertas")
+    print(tabulate(table2))  
 
 
-def print_req_5(control):
+def print_req_5(lst, size, num):
     """
         Función que imprime la solución del Requerimiento 5 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 5
-    pass
+    table = []
+    header = ['Publicacion','Titulo','Empresa','Experiencia','Pais', 'Ciudad', 'Tamano','Ubicacion', 'Salario min', 'Habilidades']
+    table.append(header)
+    
+    if size == 0:
+        imp = []
+        print("No se encontraron trabajos en el rango de fechas dado")
+    elif size <= num:
+        imp = lst
+    else: 
+        imp = lt.subList(lst, size-num+1,num)
+        
+    for job in lt.iterator(imp):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['salary_from'],
+                              job['habilidades']])
+    return table  
 
 
-def print_req_6(control):
+def print_req_6(lst, size):
     """
         Función que imprime la solución del Requerimiento 6 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 6
-    pass
-
+    table = []
+    header = ['Publicacion','Titulo','Empresa','Experiencia','Pais', 'Ciudad', 'Tamano','Ubicacion', 'Salario min', 'Habilidades']
+    table.append(header)
+    
+    if size == 0:
+        imp1 = []
+        print("No se encontraron trabajos en el rango de fechas dado")
+    elif size <= 10:
+        imp1 = lst
+        imp2 = lt.newList('ARRAY_LIST')
+    else: 
+        imp1 = lt.subList(lst, 1, 5)
+        imp2 = lt.subList(lst, size-4,5)
+        
+    for job in lt.iterator(imp1):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['salary_from'],
+                              job['habilidades']])
+                
+    for job in lt.iterator(imp2):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['salary_from'],
+                              job['habilidades']])
+    
+    return table  
 
 def print_req_7(control):
     """
@@ -156,25 +299,6 @@ def print_req_8(control):
     """
     # TODO: Imprimir el resultado del requerimiento 8
     pass
-
-def printTableJobs1(list, num):
-    table1 = []
-    header = ['Oferta','Empresa','Experticia','Publicación','País','Ciudad']
-    table1.append(header)
-    jobs1 = lt.subList(list, 1, num)
-
-    for job in lt.iterator(jobs1):
-        table1.append([job['title'],
-        job['company_name'],
-        job['experience_level'],
-        job['published_at'],
-        job['country_code'],
-        job['city']])
-
-
-        
-    return table1
-
 # IMPRIMIR TABLAS
 def printTableJobs(list, num):
     table1 = []
@@ -250,7 +374,7 @@ if __name__ == "__main__":
     while working:
         print_menu()
         inputs = input('Seleccione una opción para continuar\n')
-        if int(inputs) == 1: # CARGA DE DATOS ------------------------------------------------------
+        if int(inputs) == 1: # CARGA DE DATOS ------------------------------------------------------ CAMBIAR TAMANO DE DATOS CARGADOS
             print("Cargando información de los archivos ....\n")
             # Definir que archivos csv se van a utilizar para cargar datos -------------------------
             print("Que datos desea cargar?\n")
@@ -267,7 +391,7 @@ if __name__ == "__main__":
             ans = load_data(control, memflag=mem)
             printLoadDataAnswer(ans)
             # Cantidad de datos guardados ---------------------------------------------------------
-            print('Ofertas cargadas: ' + str(controller.set_data_size(control))) 
+            print('Ofertas cargadas: ' + str('controller.jobs_size(control)')) # Poner tamano !!!!!!!!!!!!
             #print('Libros cargados: ' + str(controller.skills_size(control))) 
             #print('Libros cargados: ' + str(controller.employment_size(control))) 
             #print('Libros cargados: ' + str(controller.multilocation_size(control))) 
@@ -279,12 +403,37 @@ if __name__ == "__main__":
             print('Ultimas ' + str(num) + " Ofertas")
             print(tabulate(table2))   
             
-        elif int(inputs) == 2:
-            print_req_1(control)
-    
-    
-        elif int(inputs) == 3:
-            print_req_2(control)
+        elif int(inputs) == 2: # REQUERIMIENTO 1 --------------------------------------------------------
+            print("\nBuscando ofertas laborales en un rango de fechas: ")
+            initialDate = input("Fecha Inicial (YYYY-MM-DD): ")
+            finalDate = input("Fecha Final (YYYY-MM-DD): ")
+            
+            ans = controller.req_1(control, initialDate, finalDate, memflag = mem)
+            control = ans[0]
+            req1size = ans[1]
+            
+            print("Tiempo [ms]: ", f"{ans[2]:.3f}")
+            if (mem == True): print("Memoria [kB]: ", f"{ans[3]:.3f}")    
+                               
+            print("Se filtraron y organizaron", req1size, "ofertas")                
+            table = print_req_1(control['model']['REQ1'], req1size)             
+            print(tabulate(table))
+            
+        elif int(inputs) == 3: # REQUERIMIENTO 2 -------------------------------------------------------
+            print("\nBuscando ofertas laborales en un rango de salarios minimos: ")
+            initialSalary = input("Salario Inicial [USD] (Sin puntos ni signos): ")
+            finalSalary = input("Salario Final [USD] (Sin puntos ni signos): ")
+            
+            ans = controller.req_2(control, initialSalary, finalSalary, memflag = mem)
+            control = ans[0]
+            req2size = ans[1]
+            
+            print("Tiempo [ms]: ", f"{ans[2]:.3f}")
+            if (mem == True): print("Memoria [kB]: ", f"{ans[3]:.3f}")    
+                               
+            print("Se filtraron y organizaron", req2size, "ofertas")                
+            table = print_req_2(control['model']['REQ2'], req2size)             
+            print(tabulate(table))
 
         elif int(inputs) == 4:
             print_req_3(control)
@@ -292,11 +441,51 @@ if __name__ == "__main__":
         elif int(inputs) == 5:
             print_req_4(control)
 
-        elif int(inputs) == 6:
-            print_req_5(control)
+        elif int(inputs) == 6: # REQUERIMIENTO 5 --------------------------------------------------------
+            print("\nBuscando ofertas laborales mas antiguas en el rango dado de tamano y habilidad solicitada: ")
+            num = input("Numero de ofertas laborales: ")
+            initialSize = input("Limite inferior del tamaño de la empresa (Numero entero): ")
+            finalSize = input("Limite superior del tamaño de la empresa (Numero entero): ")
+            skill = input("Nombre de la habilidad: ")
+            initialLim = input("Limite inferior del nivel de la habilidad: ")
+            finalLim = input("Limite superior del nivel de la habilidad: ")
 
-        elif int(inputs) == 7:
-            print_req_6(control)
+            ans = controller.req_5(control, initialSize, finalSize, skill, initialLim, finalLim, memflag = mem)
+            control = ans[0]
+            req5size = ans[1]
+            
+            print("Tiempo [ms]: ", f"{ans[2]:.3f}")
+            if (mem == True): print("Memoria [kB]: ", f"{ans[3]:.3f}")    
+                               
+            print("Se filtraron y organizaron", req5size-1, "ofertas")                
+            table = print_req_5(control['model']['REQ5'], req5size, int(num))             
+            print(tabulate(table))
+
+        elif int(inputs) == 7: # REQUERIMIENTO 6 -----------------------------------------------------------------------
+            print("\nBuscando ofertas laborales de la ciudad con mayor numero de ofertas dentro de un rango de fechas y salarios: ")
+            num = input("Numero de ciudades a consultar: ")
+            initialDate = input("Fecha Inicial (YYYY-MM-DD): ")
+            finalDate = input("Fecha Final (YYYY-MM-DD): ")
+            initialSalary = input("Salario Inicial [USD] (Sin puntos ni signos): ")
+            finalSalary = input("Salario Final [USD] (Sin puntos ni signos): ")
+
+            ans = controller.req_6(control, initialDate, finalDate, initialSalary, finalSalary, num, memflag = mem)
+            control = ans[0]
+            req6size = ans[1]
+            citiessize = ans[2]
+            cities = ans[3]
+            
+            
+            print("Tiempo [ms]: ", f"{ans[4]:.3f}")
+            if (mem == True): print("Memoria [kB]: ", f"{ans[5]:.3f}")    
+                               
+            print("Se filtraron y organizaron", req6size, "ofertas que cumplen con las especificaciones")  
+            print(citiessize, "Ciudades cumplen con las especificaciones")    
+            print("Las "+ num + " ciudades con mayores ofertas")  
+            for city in lt.iterator(cities):
+                print(city['city'])      
+            table = print_req_6(control['model']['REQ6'], lt.size(control['model']['REQ6']))             
+            print(tabulate(table))
 
         elif int(inputs) == 8:
             print_req_7(control)
