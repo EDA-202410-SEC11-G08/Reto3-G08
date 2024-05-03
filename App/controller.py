@@ -61,6 +61,7 @@ def load_data(control, memflag = True):
         
     load_data_jobs(catalog)
     load_skills(catalog)
+    load_employment(catalog)
     
     stop_time = get_time()
     deltaTime = delta_time(start_time, stop_time)
@@ -98,6 +99,15 @@ def load_skills(catalog):
     input_file = csv.DictReader(open(file, encoding='utf-8'), restval= 'Desconocido', delimiter= ";")
     for row in input_file:
         model.add_skills(catalog, row)
+            
+def load_employment(catalog):
+    """
+    Cargar csv employment types
+    """
+    file = cf.data_dir+ 'data/' + Route + 'employments_types.csv'
+    input_file = csv.DictReader(open(file, encoding='utf-8'), restval= 'Desconocido', delimiter= ";")
+    for row in input_file:
+        model.add_employment(catalog, row)
             
 def set_data_size(SizeOp):
     """
@@ -167,12 +177,39 @@ def req_1(control, initialDate, finalDate, memflag = True):
 
 
 
-def req_2(control):
+def req_2(control, initialSalary, finalSalary, memflag = True):
     """
-    Retorna el resultado del requerimiento 2
+    Retorna trabajos en el rango de salarios
     """
-    # TODO: Modificar el requerimiento 2
-    pass
+    # TODO: Modificar el requerimiento 1
+    catalog = control['model']
+    
+    # Inicio de mediciones
+    start_time = get_time()
+    if memflag is True:
+        tracemalloc.start()
+        start_memory = get_memory()
+    
+    ans = model.req_2(catalog, int(initialSalary), int(finalSalary))
+    control["model"] = ans[0]
+    size = ans[1] 
+    
+    # Finalización de mediciones
+    stop_time = get_time()
+    deltaTime = delta_time(start_time, stop_time)
+    
+    # finaliza el proceso para medir memoria
+    if memflag is True:
+        stop_memory = get_memory()
+        tracemalloc.stop()
+        # calcula la diferencia de memoria
+        deltaMemory = delta_memory(stop_memory, start_memory)
+        # respuesta con los datos de tiempo y memoria
+        return control, size, deltaTime, deltaMemory
+
+    else:
+        # respuesta sin medir memoria
+        return control, size, deltaTime
 
 
 def req_3(control):

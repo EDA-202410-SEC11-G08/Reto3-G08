@@ -92,13 +92,10 @@ def print_req_1(lst, size):
         imp1 = []
         print("No se encontraron trabajos en el rango de fechas dado")
     elif size <= 10:
-        imp1 = lst[0]
-        cont1 = 1   
+        imp1 = lst
     else: 
-        imp1 = lt.subList(lst[0], 1, 5)
-        cont1 = 1
-        imp2 = lt.subList(lst[0], size-4,5)
-        cont2 = size-4
+        imp1 = lt.subList(lst, 1, 5)
+        imp2 = lt.subList(lst, size-4,5)
         
     for job in lt.iterator(imp1):
                 table.append([job['published_at'],
@@ -109,8 +106,7 @@ def print_req_1(lst, size):
                               job['city'],
                               job['company_size'],
                               job['workplace_type'],
-                              lt.getElement(lst[1],cont1)])
-                cont1 += 1
+                              job['habilidades']])
                 
     for job in lt.iterator(imp2):
                 table.append([job['published_at'],
@@ -121,18 +117,55 @@ def print_req_1(lst, size):
                               job['city'],
                               job['company_size'],
                               job['workplace_type'],
-                              lt.getElement(lst[1],cont2)])
-                cont2 += 1
+                              job['habilidades']])
     
     return table    
 
 
-def print_req_2(control):
+def print_req_2(lst, size):
     """
         Función que imprime la solución del Requerimiento 2 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 2
-    pass
+    table = []
+    header = ['Publicacion','Titulo','Empresa','Experiencia','Pais', 'Ciudad', 'Tamano','Ubicacion', 'Salario min', 'Habilidades']
+    table.append(header)
+    
+    if size == 0:
+        imp1 = []
+        print("No se encontraron trabajos en el rango de fechas dado")
+    elif size <= 10:
+        imp1 = lst
+    else: 
+        imp1 = lt.subList(lst, 1, 5)
+        imp2 = lt.subList(lst, size-4,5)
+        
+    for job in lt.iterator(imp1):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['salary_from'],
+                              job['habilidades']])
+                
+    for job in lt.iterator(imp2):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['salary_from'],
+                              job['habilidades']])
+    
+    return table  
+    
 
 
 def print_req_3(control):
@@ -256,7 +289,7 @@ if __name__ == "__main__":
     while working:
         print_menu()
         inputs = input('Seleccione una opción para continuar\n')
-        if int(inputs) == 1: # CARGA DE DATOS ------------------------------------------------------
+        if int(inputs) == 1: # CARGA DE DATOS ------------------------------------------------------ CAMBIAR TAMANO DE DATOS CARGADOS
             print("Cargando información de los archivos ....\n")
             # Definir que archivos csv se van a utilizar para cargar datos -------------------------
             print("Que datos desea cargar?\n")
@@ -273,7 +306,7 @@ if __name__ == "__main__":
             ans = load_data(control, memflag=mem)
             printLoadDataAnswer(ans)
             # Cantidad de datos guardados ---------------------------------------------------------
-            print('Ofertas cargadas: ' + str('controller.jobs_size(control)')) # Poner tamano
+            print('Ofertas cargadas: ' + str('controller.jobs_size(control)')) # Poner tamano !!!!!!!!!!!!
             #print('Libros cargados: ' + str(controller.skills_size(control))) 
             #print('Libros cargados: ' + str(controller.employment_size(control))) 
             #print('Libros cargados: ' + str(controller.multilocation_size(control))) 
@@ -285,7 +318,7 @@ if __name__ == "__main__":
             print('Ultimas ' + str(num) + " Ofertas")
             print(tabulate(table2))   
             
-        elif int(inputs) == 2:
+        elif int(inputs) == 2: # REQUERIMIENTO 1 --------------------------------------------------------
             print("\nBuscando ofertas laborales en un rango de fechas: ")
             initialDate = input("Fecha Inicial (YYYY-MM-DD): ")
             finalDate = input("Fecha Final (YYYY-MM-DD): ")
@@ -301,8 +334,21 @@ if __name__ == "__main__":
             table = print_req_1(control['model']['REQ1'], req1size)             
             print(tabulate(table))
             
-        elif int(inputs) == 3:
-            print_req_2(control)
+        elif int(inputs) == 3: # REQUERIMIENTO 2 -------------------------------------------------------
+            print("\nBuscando ofertas laborales en un rango de salarios minimos: ")
+            initialSalary = input("Salario Inicial [USD] (Sin puntos ni signos): ")
+            finalSalary = input("Salario Final [USD] (Sin puntos ni signos): ")
+            
+            ans = controller.req_2(control, initialSalary, finalSalary, memflag = mem)
+            control = ans[0]
+            req2size = ans[1]
+            
+            print("Tiempo [ms]: ", f"{ans[2]:.3f}")
+            if (mem == True): print("Memoria [kB]: ", f"{ans[3]:.3f}")    
+                               
+            print("Se filtraron y organizaron", req2size, "ofertas")                
+            table = print_req_2(control['model']['REQ2'], req2size)             
+            print(tabulate(table))
 
         elif int(inputs) == 4:
             print_req_3(control)
@@ -310,7 +356,7 @@ if __name__ == "__main__":
         elif int(inputs) == 5:
             print_req_4(control)
 
-        elif int(inputs) == 6:
+        elif int(inputs) == 6: # REQUERIMIENTO 5 --------------------------------------------------------
             print_req_5(control)
 
         elif int(inputs) == 7:
