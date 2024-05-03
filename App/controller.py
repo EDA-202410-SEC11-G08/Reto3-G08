@@ -228,18 +228,73 @@ def req_4(control):
     pass
 
 
-def req_5(control):
+def req_5(control, initialSize, finalSize, skill, initialLim, finalLim, memflag = True):
     """
     Retorna el resultado del requerimiento 5
     """
     # TODO: Modificar el requerimiento 5
-    pass
+    catalog = control['model']
+    
+    # Inicio de mediciones
+    start_time = get_time()
+    if memflag is True:
+        tracemalloc.start()
+        start_memory = get_memory()
+    
+    ans = model.req_5(catalog, int(initialSize), int(finalSize), skill, int(initialLim), int(finalLim))
+    control["model"] = ans[0]
+    size = ans[1] 
+    
+    # Finalización de mediciones
+    stop_time = get_time()
+    deltaTime = delta_time(start_time, stop_time)
+    
+    # finaliza el proceso para medir memoria
+    if memflag is True:
+        stop_memory = get_memory()
+        tracemalloc.stop()
+        # calcula la diferencia de memoria
+        deltaMemory = delta_memory(stop_memory, start_memory)
+        # respuesta con los datos de tiempo y memoria
+        return control, size, deltaTime, deltaMemory
 
-def req_6(control):
+    else:
+        # respuesta sin medir memoria
+        return control, size, deltaTime
+
+def req_6(control, initialDate, finalDate, initialSalary, finalSalary, memflag = mem):
     """
     Retorna el resultado del requerimiento 6
     """
     # TODO: Modificar el requerimiento 6
+    catalog = control['model']
+    
+    # Inicio de mediciones
+    start_time = get_time()
+    if memflag is True:
+        tracemalloc.start()
+        start_memory = get_memory()
+    
+    ans = model.req_6(catalog, initialDate, finalDate, initialSalary, finalSalary)
+    control["model"] = ans[0]
+    size = ans[1] 
+    
+    # Finalización de mediciones
+    stop_time = get_time()
+    deltaTime = delta_time(start_time, stop_time)
+    
+    # finaliza el proceso para medir memoria
+    if memflag is True:
+        stop_memory = get_memory()
+        tracemalloc.stop()
+        # calcula la diferencia de memoria
+        deltaMemory = delta_memory(stop_memory, start_memory)
+        # respuesta con los datos de tiempo y memoria
+        return control, size, deltaTime, deltaMemory
+
+    else:
+        # respuesta sin medir memoria
+        return control, size, deltaTime
     pass
 
 

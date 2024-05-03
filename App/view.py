@@ -184,12 +184,35 @@ def print_req_4(control):
     pass
 
 
-def print_req_5(control):
+def print_req_5(lst, size, num):
     """
         Función que imprime la solución del Requerimiento 5 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 5
-    pass
+    table = []
+    header = ['Publicacion','Titulo','Empresa','Experiencia','Pais', 'Ciudad', 'Tamano','Ubicacion', 'Salario min', 'Habilidades']
+    table.append(header)
+    
+    if size == 0:
+        imp = []
+        print("No se encontraron trabajos en el rango de fechas dado")
+    elif size <= num:
+        imp = lst
+    else: 
+        imp = lt.subList(lst, size-num+1,num)
+        
+    for job in lt.iterator(imp):
+                table.append([job['published_at'],
+                              job['title'],
+                              job['company_name'],
+                              job['experience_level'],
+                              job['country_code'],
+                              job['city'],
+                              job['company_size'],
+                              job['workplace_type'],
+                              job['salary_from'],
+                              job['habilidades']])
+    return table  
 
 
 def print_req_6(control):
@@ -357,10 +380,43 @@ if __name__ == "__main__":
             print_req_4(control)
 
         elif int(inputs) == 6: # REQUERIMIENTO 5 --------------------------------------------------------
-            print_req_5(control)
+            print("\nBuscando ofertas laborales mas antiguas en el rango dado de tamano y habilidad solicitada: ")
+            num = input("Numero de ofertas laborales: ")
+            initialDate = input("Fecha Inicial (YYYY-MM-DD): ")
+            finalDate = input("Fecha Final (YYYY-MM-DD): ")
+            initialSalary = input("Limite inferior del nivel de la habilidad: ")
+            finalSalary = input("Limite superior del nivel de la habilidad: ")
 
-        elif int(inputs) == 7:
-            print_req_6(control)
+            ans = controller.req_6(control, initialDate, finalDate, initialSalary, finalSalary, memflag = mem)
+            control = ans[0]
+            req6size = ans[1]
+            
+            print("Tiempo [ms]: ", f"{ans[2]:.3f}")
+            if (mem == True): print("Memoria [kB]: ", f"{ans[3]:.3f}")    
+                               
+            print("Se filtraron y organizaron", req6size, "ofertas")                
+            table = print_req_6(control['model']['REQ6'], req5size, int(num))             
+            print(tabulate(table))
+
+        elif int(inputs) == 7: # REQUERIMIENTO 6 -----------------------------------------------------------------------
+            print("\nBuscando ofertas laborales de la ciudad con mayor numero de ofertas dentro de un rango de fechas y salarios: ")
+            num = input("Numero de ciudades a consultar: ")
+            initialSize = input("Limite inferior (Numero entero): ")
+            finalSize = input("Limite superior (Numero entero): ")
+            skill = input("Nombre de la habilidad solicitada: ")
+            initialLim = input("Limite inferior del nivel de la habilidad: ")
+            finalLim = input("Limite superior del nivel de la habilidad: ")
+
+            ans = controller.req_5(control, initialSize, finalSize, skill, initialLim, finalLim, memflag = mem)
+            control = ans[0]
+            req5size = ans[1]
+            
+            print("Tiempo [ms]: ", f"{ans[2]:.3f}")
+            if (mem == True): print("Memoria [kB]: ", f"{ans[3]:.3f}")    
+                               
+            print("Se filtraron y organizaron", req5size, "ofertas")                
+            table = print_req_6(control['model']['REQ6'], req5size, int(num))             
+            print(tabulate(table))
 
         elif int(inputs) == 8:
             print_req_7(control)
