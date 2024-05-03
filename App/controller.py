@@ -262,7 +262,7 @@ def req_5(control, initialSize, finalSize, skill, initialLim, finalLim, memflag 
         # respuesta sin medir memoria
         return control, size, deltaTime
 
-def req_6(control, initialDate, finalDate, initialSalary, finalSalary, memflag = mem):
+def req_6(control, initialDate, finalDate, initialSalary, finalSalary, num, memflag = True):
     """
     Retorna el resultado del requerimiento 6
     """
@@ -274,10 +274,14 @@ def req_6(control, initialDate, finalDate, initialSalary, finalSalary, memflag =
     if memflag is True:
         tracemalloc.start()
         start_memory = get_memory()
-    
-    ans = model.req_6(catalog, initialDate, finalDate, initialSalary, finalSalary)
+        
+    initialDate = datetime.datetime.strptime(initialDate, "%Y-%m-%d")
+    finalDate = datetime.datetime.strptime(finalDate, "%Y-%m-%d")
+    ans = model.req_6(catalog, initialDate.date(), finalDate.date(), int(initialSalary), int(finalSalary), num)
     control["model"] = ans[0]
     size = ans[1] 
+    citiessize = ans[2]
+    cities = ans[3]
     
     # Finalización de mediciones
     stop_time = get_time()
@@ -290,12 +294,11 @@ def req_6(control, initialDate, finalDate, initialSalary, finalSalary, memflag =
         # calcula la diferencia de memoria
         deltaMemory = delta_memory(stop_memory, start_memory)
         # respuesta con los datos de tiempo y memoria
-        return control, size, deltaTime, deltaMemory
+        return control, size, citiessize, cities, deltaTime, deltaMemory
 
     else:
         # respuesta sin medir memoria
-        return control, size, deltaTime
-    pass
+        return control, size, citiessize, cities, deltaTime
 
 
 def req_7(control):

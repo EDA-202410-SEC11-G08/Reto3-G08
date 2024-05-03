@@ -60,9 +60,10 @@ def new_catalog():
     catalog = {'Trabajos': None,
                'mapa_id': None,
                'dateIndex': None,
+               'sizeIndex': None,
                'habilidades_id': None,
-               'habilidades_name': None,
                'employment_types_id': None,
+               'salary_min': None,
                'multilocations_id': None,}
     
     # Lista con todos los trabajos encontrados en el archivo de carga
@@ -311,7 +312,6 @@ def req_1(catalog, initialDate, finalDate): # REQUERIMIENTO 1 ------------------
     # TODO: Realizar el requerimiento 1
     lst = om.values(catalog["dateIndex"], initialDate, finalDate)
     lst_flt = lt.newList('ARRAY_LIST', compareDates) #REVISAR CON Y SIN CMP - BUSCAR CAMBIOS EN FECHAS
-    skills_flt = lt.newList('ARRAY_LIST')
     for lstdate in lt.iterator(lst):
         for job in lt.iterator(lstdate['lstjobs']):
             skill_map = me.getValue(m.get(catalog['habilidades_id'], job['id']))
@@ -395,7 +395,7 @@ def req_5(catalog, initialSize, finalSize, skill, initialLim, finalLim): # REQUE
                 if ((skill == name['name']) and (int(name['level']) >= initialLim) and (int(name['level']) <= finalLim)):
                     row['habilidades'] = skill_map['names']
                     row['salary_from'] = employment_map['salary_from']
-                    lt.addLast(lst_flt, row) # Obtener los ID de trabajos que cumplen con el rango de salarios
+                    lt.addLast(lst_flt, row) # Obtener los ID de trabajos que cumplen con el rango de tamano y habilidad
         
     size = lt.size(lst_flt) # Numero de trabajos que cumplen 
     
@@ -406,12 +406,61 @@ def req_5(catalog, initialSize, finalSize, skill, initialLim, finalLim): # REQUE
     return catalog, size
 
 
-def req_6(data_structs):
+def req_6(catalog, initialDate, finalDate, initialSalary, finalSalary, num):
     """
     Función que soluciona el requerimiento 6
     """
     # TODO: Realizar el requerimiento 6
-    pass
+    lst = om.values(catalog["dateIndex"], initialDate, finalDate)
+    lst_flt = lt.newList('ARRAY_LIST', compareDates) #REVISAR CON Y SIN CMP - BUSCAR CAMBIOS EN FECHAS    ELIMINAR 
+    city_map = m.newMap(10000, maptype='CHAINING', loadfactor=4)
+    
+    for lstdate in lt.iterator(lst):
+        for row in lt.iterator(lstdate['lstjobs']):
+            employment_map = me.getValue(m.get(catalog['employment_types_id'], row['id']))
+            skill_map = me.getValue(m.get(catalog['habilidades_id'], row['id']))
+            if ((int(employment_map['salary_from']) >= initialSalary) and (int(employment_map['salary_from']) <= finalSalary)):
+                row['habilidades'] = skill_map['names']
+                row['salary_from'] = employment_map['salary_from']
+                
+                add_city(city_map, row['city'], row) # Diccionario
+                lt.addLast(lst_flt, row) # Obtener los ID de trabajos que cumplen con el rango de salarios ELIMINAR
+    
+    citiessize = m.size(city_map) # numero de ciudades que cumplen
+    cities = m.valueSet(city_map) # dic ciudades con los trabajos correspondientes adentro, que cumplen con salario y fecha
+    cities = merg.sort(cities, cmp_city_maps) #organizados por ciudades con mayor cantidad de empleos
+    cities = lt.subList(cities, 1, int(num)) # sublista con la cantidad de ciudades deseada a consultar
+    
+    jobs_city = lt.getElement(cities, 1)['jobs']
+    jobs_city = merg.sort(jobs_city, cmp_fecha_empresa)
+        
+    size = lt.size(lst_flt) # Numero de trabajos que cumplen 
+    
+    catalog['REQ6'] = jobs_city
+
+    return catalog, size, citiessize, cities
+# lista filtrada, numero de ofertas laborales que cumplen, numero de ciudades que cumplen, lista de NUM ciudades
+
+
+def add_city(map,city, job):
+    cities = map
+    existcity = m.contains(cities, city)
+    if existcity:
+        entry = m.get(cities, city)
+        citytemp = me.getValue(entry)
+    else:
+        citytemp = new_city(city)
+        m.put(cities, city, citytemp)
+    lt.addLast(citytemp['jobs'], job)  
+    citytemp['size'] = lt.size(citytemp['jobs'])
+
+def new_city(city_in):
+    city = {'city': "",
+               "jobs": None,
+               "size": 0}
+    city['city'] = city_in
+    city['jobs'] = lt.newList('ARRAY_LIST')  
+    return city 
 
 
 def req_7(data_structs):
@@ -590,6 +639,15 @@ def cmp_req2(oferta1, oferta2): #Criterio ordenamiento RQ 2 - 1) Salario Mayor a
         return True
     elif (oferta1["salary_from"] == oferta2["salary_from"]):
         if (datetime.datetime.strptime(oferta1["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ") > datetime.datetime.strptime(oferta2["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ")):
+            return True
+        else: return False
+    else: return False
+
+def cmp_city_maps(oferta1, oferta2):
+    if (oferta1['size'] > oferta2['size']):
+        return True
+    elif (oferta1['size'] == oferta2['size']):
+        if (oferta1['city'] > oferta2['city']):
             return True
         else: return False
     else: return False
