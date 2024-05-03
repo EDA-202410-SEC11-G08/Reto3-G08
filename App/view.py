@@ -39,7 +39,7 @@ se hace la solicitud al controlador para ejecutar la
 operación solicitada
 """
 
-cont=None 
+
 def new_controller():
     """
         Se crea una instancia del controlador
@@ -69,7 +69,6 @@ def load_data(control, memflag):
     """
     #TODO: Realizar la carga de datos
     ans = controller.load_data(control, memflag)
-    
     return ans
 
 
@@ -90,24 +89,18 @@ def print_req_1(control):
     finalDate = input("Fecha Final (YYYY-MM-DD): ")
     total = controller.req_1(control, initialDate, finalDate)
     print("\nTotal de ofertas pulicadas en el rango de fechas: " + str(total))
-    table1 = []
-    header = ['Fecha Publicación','Oferta','Empresa','Experticia','País','Ciudad','Tamaño Empresa', 'Ubicación']
-    table1.append(header)
-    jobs1 = lt.subList(list, 1, num)
-
-    for job in lt.iterator(jobs1):
-        table1.append([
-        job['published_at'],
-        job['title'],
-        job['company_name'],
-        job['experience_level'],
-        job['country_code'],
-        job['city'],
-        job['company_size'],
-        job['workplace_type']])    
-        
-    
-
+    if total > 10: 
+        num = total
+        table1, table2 = printTableJobs(control["model"]["Trabajos"], int(10))
+        print('Primeras ' + str(10) + " Ofertas")
+        print(tabulate(table1))
+        print('Ultimas ' + str(10) + " Ofertas")
+        print(tabulate(table2))   
+    else:
+        num =total
+        table3=printTableJobs1(control["model"]["Trabajos"], int(num))
+        print(table3)
+            
 
 def print_req_2(control):
     """
@@ -163,6 +156,25 @@ def print_req_8(control):
     """
     # TODO: Imprimir el resultado del requerimiento 8
     pass
+
+def printTableJobs1(list, num):
+    table1 = []
+    header = ['Oferta','Empresa','Experticia','Publicación','País','Ciudad']
+    table1.append(header)
+    jobs1 = lt.subList(list, 1, num)
+
+    for job in lt.iterator(jobs1):
+        table1.append([job['title'],
+        job['company_name'],
+        job['experience_level'],
+        job['published_at'],
+        job['country_code'],
+        job['city']])
+
+
+        
+    return table1
+
 # IMPRIMIR TABLAS
 def printTableJobs(list, num):
     table1 = []
@@ -179,9 +191,7 @@ def printTableJobs(list, num):
         job['experience_level'],
         job['published_at'],
         job['country_code'],
-        job['city'],
-        job['company_size'],
-        job['workplace_type']])
+        job['city']])
 
     for job in lt.iterator(jobs2):
         table2.append([job['title'],
@@ -189,8 +199,8 @@ def printTableJobs(list, num):
         job['experience_level'],
         job['published_at'],
         job['country_code'],
-        job['city']
-        ])        
+        job['city']])
+        
     return table1, table2
 
 # IMPRIMIR RESULTADOS DE ANALISIS - TIEMPO Y MEMORIA
@@ -271,7 +281,8 @@ if __name__ == "__main__":
             
         elif int(inputs) == 2:
             print_req_1(control)
-
+    
+    
         elif int(inputs) == 3:
             print_req_2(control)
 
