@@ -380,7 +380,7 @@ def req_5(catalog, initialSize, finalSize, skill, initialLim, finalLim): # REQUE
     return catalog, size
 
 
-def req_6(catalog, initialDate, finalDate, initialSalary, finalSalary, num):
+def req_6(catalog, initialDate, finalDate, initialSalary, finalSalary, num): # REQUERIMIENTO 6 -----------------------------------------------------------------------
     """
     Función que soluciona el requerimiento 6
     """
