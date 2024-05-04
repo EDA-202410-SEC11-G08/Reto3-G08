@@ -103,9 +103,9 @@ def add_data_jobs(catalog, job):
     """
     #TODO: Crear la función para agregar elementos a una lista
     lt.addLast(catalog['Trabajos'], job)
-    update_date_index(catalog['dateIndex'], job)
-    update_size_index(catalog['sizeIndex'], job)
-    m.put(catalog['mapa_id'], job['id'], job)
+    update_date_index(catalog['dateIndex'], job) #arbol fechas
+    update_size_index(catalog['sizeIndex'], job) #arbol tamano de empresa
+    m.put(catalog['mapa_id'], job['id'], job) #mapa hash por id
     
     return catalog
 
@@ -122,7 +122,7 @@ def update_date_index(map, job): # CAMBIAR DESCRIPCION
     fecha_f = datetime.datetime.strptime(fecha, "%Y-%m-%dT%H:%M:%S.%fZ")
     entry = om.get(map, fecha_f.date())
     if entry is None:
-        datentry = new_data_entry(job)
+        datentry = new_date_entry(job)
         om.put(map, fecha_f.date(), datentry)
     else:
         datentry = me.getValue(entry)
@@ -143,22 +143,10 @@ def update_size_index(map, job):
 
 def add_date_index(datentry, job):
     """
-    Actualiza un indice de tipo de crimenes.  Este indice tiene una lista
-    de crimenes y una tabla de hash cuya llave es el tipo de crimen y
-    el valor es una lista con los crimenes de dicho tipo en la fecha que
-    se está consultando (dada por el nodo del arbol)
+    Arbol rbt por fechas con las ofertas de trabajo correspondientes a la fecha
     """
     lst = datentry["lstjobs"]
     lt.addLast(lst, job)
-    cityIndex = datentry["cityIndex"]
-    cityentry = m.get(cityIndex, job["city"])
-    if (cityentry is None):
-        entry = new_city_entry(job["city"], job)
-        lt.addLast(entry["lstcity"], job) #
-        m.put(cityIndex, job["city"], entry)
-    else:
-        entry = me.getValue(cityentry)
-        lt.addLast(entry["lstcity"], job) #
     return datentry
 
 def add_size_index(dataentry, job):
@@ -166,36 +154,22 @@ def add_size_index(dataentry, job):
     lt.addLast(lst, job)
     return dataentry
 
-def new_data_entry(job):
+def new_date_entry(job):
     """
     Crea una entrada en el indice por fechas, es decir en el arbol
     binario.
     """
-    entry = {"lstjobs": None,
-             "cityIndex": None, 
-             "countryIndex": None}
+    entry = {"lstjobs": None}
     entry["cityIndex"] = m.newMap(numelements=30,
                                      maptype="PROBING",
                                      cmpfunction=compareOffenses)
     entry["lstjobs"] = lt.newList("ARRAY_LIST", compareDates)
-    lt.addLast(entry["lstjobs"], job)
     return entry
 
 def new_size_entry(job):
     entry = {'id': None, 'row': None}
     entry['id'] = job['id']
     entry['row'] = lt.newList('ARRAY_LIST', compareDates)
-    return entry
-
-def new_city_entry(city, job):
-    """
-    Crea una entrada en el indice por tipo de crimen, es decir en
-    la tabla de hash, que se encuentra en cada nodo del arbol.
-    """
-    entry = {"city": None, "lstcity": None}
-    entry["city"] = city
-    entry["lstcity"] = lt.newList("ARRAY_LIST", compareDates)
-    lt.addLast(entry["lstcity"], job)
     return entry
 
 def add_skills(catalog, skill):
@@ -320,7 +294,7 @@ def req_1(catalog, initialDate, finalDate): # REQUERIMIENTO 1 ------------------
         
     size = lt.size(lst_flt)
     
-    if lst_flt != 0:
+    if size != 0:
         lst_flt = cus.sort(lst_flt, cmp_fecha_empresa) # REVISAR ALGORITMO DE SORT
     
     catalog['REQ1'] = lst_flt
@@ -428,11 +402,12 @@ def req_6(catalog, initialDate, finalDate, initialSalary, finalSalary, num):
     
     citiessize = m.size(city_map) # numero de ciudades que cumplen
     cities = m.valueSet(city_map) # dic ciudades con los trabajos correspondientes adentro, que cumplen con salario y fecha
-    cities = merg.sort(cities, cmp_city_maps) #organizados por ciudades con mayor cantidad de empleos
-    cities = lt.subList(cities, 1, int(num)) # sublista con la cantidad de ciudades deseada a consultar
+    if lt.size(cities) > 0:
+        cities = merg.sort(cities, cmp_city_maps) #organizados por ciudades con mayor cantidad de empleos
+        cities = lt.subList(cities, 1, int(num)) # sublista con la cantidad de ciudades deseada a consultar
     
-    jobs_city = lt.getElement(cities, 1)['jobs']
-    jobs_city = merg.sort(jobs_city, cmp_fecha_empresa)
+        jobs_city = lt.getElement(cities, 1)['jobs']
+        jobs_city = merg.sort(jobs_city, cmp_fecha_empresa)
         
     size = lt.size(lst_flt) # Numero de trabajos que cumplen 
     

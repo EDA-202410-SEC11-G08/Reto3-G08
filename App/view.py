@@ -371,17 +371,20 @@ if __name__ == "__main__":
             #print('Libros cargados: ' + str(controller.employment_size(control))) 
             #print('Libros cargados: ' + str(controller.multilocation_size(control))) 
             # Ofertas a visualizar
-            num = input('Cuantas ofertas desea visualizar ')
-            table1, table2 = printTableJobs(control["model"]["Trabajos"], int(num))
-            print('Primeras ' + str(num) + " Ofertas")
+            table1, table2 = printTableJobs(control["model"]["Trabajos"], 3)
+            print('Primeras ' + str(3) + " Ofertas")
             print(tabulate(table1))
-            print('Ultimas ' + str(num) + " Ofertas")
+            print('Ultimas ' + str(3) + " Ofertas")
             print(tabulate(table2))   
             
         elif int(inputs) == 2: # REQUERIMIENTO 1 --------------------------------------------------------
             print("\nBuscando ofertas laborales en un rango de fechas: ")
             initialDate = input("Fecha Inicial (YYYY-MM-DD): ")
             finalDate = input("Fecha Final (YYYY-MM-DD): ")
+            # Observar uso de memoria en la carga de datos ----------------------------------------
+            print("Desea observar el uso de memoria? (True/False)")
+            mem = input("Respuesta: ")
+            mem = castBoolean(mem)
             
             ans = controller.req_1(control, initialDate, finalDate, memflag = mem)
             control = ans[0]
@@ -398,6 +401,10 @@ if __name__ == "__main__":
             print("\nBuscando ofertas laborales en un rango de salarios minimos: ")
             initialSalary = input("Salario Inicial [USD] (Sin puntos ni signos): ")
             finalSalary = input("Salario Final [USD] (Sin puntos ni signos): ")
+            # Observar uso de memoria en la carga de datos ----------------------------------------
+            print("Desea observar el uso de memoria? (True/False)")
+            mem = input("Respuesta: ")
+            mem = castBoolean(mem)
             
             ans = controller.req_2(control, initialSalary, finalSalary, memflag = mem)
             control = ans[0]
@@ -421,9 +428,14 @@ if __name__ == "__main__":
             num = input("Numero de ofertas laborales: ")
             initialSize = input("Limite inferior (Numero entero): ")
             finalSize = input("Limite superior (Numero entero): ")
-            skill = input("")
+            skill = input("Nombre de la habilidad solicitada: ")
             initialLim = input("Limite inferior del nivel de la habilidad: ")
             finalLim = input("Limite superior del nivel de la habilidad: ")
+            
+            # Observar uso de memoria en la carga de datos ----------------------------------------
+            print("Desea observar el uso de memoria? (True/False)")
+            mem = input("Respuesta: ")
+            mem = castBoolean(mem)
 
             ans = controller.req_5(control, initialSize, finalSize, skill, initialLim, finalLim, memflag = mem)
             control = ans[0]
@@ -443,6 +455,11 @@ if __name__ == "__main__":
             finalDate = input("Fecha Final (YYYY-MM-DD): ")
             initialSalary = input("Salario Inicial [USD] (Sin puntos ni signos): ")
             finalSalary = input("Salario Final [USD] (Sin puntos ni signos): ")
+            
+            # Observar uso de memoria en la carga de datos ----------------------------------------
+            print("Desea observar el uso de memoria? (True/False)")
+            mem = input("Respuesta: ")
+            mem = castBoolean(mem)
 
             ans = controller.req_6(control, initialDate, finalDate, initialSalary, finalSalary, num, memflag = mem)
             control = ans[0]
