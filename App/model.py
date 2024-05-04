@@ -60,16 +60,21 @@ def new_catalog():
     catalog = {'Trabajos': None,
                'mapa_id': None,
                'dateIndex': None,
+               'sizeIndex': None,
                'habilidades_id': None,
-               'habilidades_name': None,
                'employment_types_id': None,
+               'salary_min': None,
                'multilocations_id': None,}
     
     # Lista con todos los trabajos encontrados en el archivo de carga
     catalog['Trabajos'] = lt.newList('ARRAY_LIST', compareJobIds)
     catalog['dateIndex'] = om.newMap(omaptype='RBT',
                                      cmpfunction=compareDates)
-    catalog['mapa_id']
+    catalog['sizeIndex'] = om.newMap(omaptype='RBT',
+                                     cmpfunction=compareSizes)
+    catalog['mapa_id'] = m.newMap(300000,
+                                  maptype='PROBING',
+                                  loadfactor=0.7)
 
 
     # EStructuras de datos para guardar info del csv skills
@@ -77,9 +82,9 @@ def new_catalog():
                                           maptype="CHAINING",
                                           loadfactor = 4) 
     # EStructuras de datos para guardar info del csv emlpoyment types
-    catalog['employment_types_id'] = m.newMap(10000,
-                                               maptype = "CHAINING",
-                                               loadfactor = 4)
+    catalog['employment_types_id'] = m.newMap(300000,
+                                               maptype = "PROBING",
+                                               loadfactor = 0.7)
     catalog['salary_min'] = om.newMap(omaptype='RBT',
                                       cmpfunction=compareSalary)
     
@@ -99,9 +104,12 @@ def add_data_jobs(catalog, job):
     #TODO: Crear la función para agregar elementos a una lista
     lt.addLast(catalog['Trabajos'], job)
     update_date_index(catalog['dateIndex'], job)
+    update_size_index(catalog['sizeIndex'], job)
+    m.put(catalog['mapa_id'], job['id'], job)
+    
     return catalog
 
-def update_date_index(map, job):
+def update_date_index(map, job): # CAMBIAR DESCRIPCION
     """
     Se toma la fecha del trabajo y se busca si ya existe en el arbol
     dicha fecha.  Si es asi, se adiciona a su lista de crimenes
@@ -119,6 +127,18 @@ def update_date_index(map, job):
     else:
         datentry = me.getValue(entry)
     add_date_index(datentry, job)
+    return map
+
+def update_size_index(map, job):
+    try: companysize = int(job['company_size'])
+    except: companysize = 0
+    entry = om.get(map, companysize)
+    if entry is None:
+        dataentry = new_size_entry(job)
+        om.put(map, companysize, dataentry)
+    else:
+        dataentry = me.getValue(entry)
+    add_size_index(dataentry, job)
     return map
 
 def add_date_index(datentry, job):
@@ -141,6 +161,11 @@ def add_date_index(datentry, job):
         lt.addLast(entry["lstcity"], job) #
     return datentry
 
+def add_size_index(dataentry, job):
+    lst = dataentry["row"]
+    lt.addLast(lst, job)
+    return dataentry
+
 def new_data_entry(job):
     """
     Crea una entrada en el indice por fechas, es decir en el arbol
@@ -156,6 +181,12 @@ def new_data_entry(job):
     lt.addLast(entry["lstjobs"], job)
     return entry
 
+def new_size_entry(job):
+    entry = {'id': None, 'row': None}
+    entry['id'] = job['id']
+    entry['row'] = lt.newList('ARRAY_LIST', compareDates)
+    return entry
+
 def new_city_entry(city, job):
     """
     Crea una entrada en el indice por tipo de crimen, es decir en
@@ -163,10 +194,89 @@ def new_city_entry(city, job):
     """
     entry = {"city": None, "lstcity": None}
     entry["city"] = city
-    entry["lstcity"] = lt.newList("SINGLE_LINKED", compareDates)
+    entry["lstcity"] = lt.newList("ARRAY_LIST", compareDates)
     lt.addLast(entry["lstcity"], job)
     return entry
 
+def add_skills(catalog, skill):
+    add_skills_id(catalog, skill['id'], skill)
+    return catalog
+    
+def add_skills_id(catalog, id, skill):
+    skills = catalog['habilidades_id']
+    existid = m.contains(skills, id)
+    if existid:
+        entry = m.get(skills, id)
+        skillid = me.getValue(entry)
+    else:
+        skillid = new_skill_id(id)
+        m.put(skills, id, skillid)
+    lt.addLast(skillid['row'],skill)
+    
+    skillid['sum'] += int(skill['level'])
+    skillid['size'] += 1
+    skillid['avg'] = int(skillid['sum'])/int(skillid['size'])
+    skillid['names'].append(skill['name'])
+
+def new_skill_id(id):
+    skill_id = {'id': "",
+                "row": None, #Columnas enteras con el id - name;level;id
+                'sum': 0, #Suma de los niveles de las habilidades
+                'size': 0, # conteo de numero de habilidades
+                'avg': 0, #Promedio de habilidades
+                'names': None
+                }
+    skill_id['id'] = id
+    skill_id['names'] = []
+    skill_id['row'] = lt.newList('ARRAY_LIST')
+    return skill_id
+
+def add_employment(catalog, employment): 
+    
+    salary = employment["salary_from"]
+    currency = employment['currency_salary']
+    
+    salary_f = convert_currency(currency, salary)
+    employment['salary_from'] = salary_f
+    employment['currency_salary'] = 'USD'
+    
+    update_salary_index(catalog['salary_min'], employment)
+    m.put(catalog['employment_types_id'], employment['id'], employment)
+    return catalog
+    
+def update_salary_index(map, employment):
+    salary = employment["salary_from"]
+    currency = employment['currency_salary']
+    
+    
+    entry = om.get(map, salary)
+    if entry is None:
+        datentry = new_salary_entry(employment)
+        om.put(map, salary, datentry)
+    else:
+        datentry = me.getValue(entry)
+    add_salary_index(datentry, employment)
+    return map
+
+def add_salary_index(dataentry, employment):
+    lst = dataentry["row"]
+    lt.addLast(lst, employment)
+    return dataentry
+
+def new_salary_entry(employment):
+    entry = {'id': None, 'row': None}
+    entry['id'] = employment['id']
+    entry['row'] = lt.newList('ARRAY_LIST', compareDates)
+    return entry
+
+def convert_currency(currency, salary):
+    if (currency == 'usd'):   salary_f = int(salary)
+    elif (currency == 'chf'): salary_f = int(salary)*1.09 # TASA DE CAMBIO 1.09 CHF - 1 USD
+    elif (currency == 'eur'): salary_f = int(salary)*1.07 # TASA DE CAMBIO 1.07 EUR - 1 USD
+    elif (currency == 'gbp'): salary_f = int(salary)*1.25 # TASA DE CAMBIO 1.25 GBP - 1 USD
+    elif (currency == 'pln'): salary_f = int(salary)*4.04 # TASA DE CAMBIO 4.04 PLN - 1 USD'
+    else: salary_f = 0
+    return salary_f
 # Funciones para creacion de datos
 
 def new_data(id, info):
@@ -192,63 +302,205 @@ def data_size(data_structs):
     Retorna el tamaño de la lista de datos
     """
     #TODO: Crear la función para obtener el tamaño de una lista
-    pass
+    return lt.size(data_structs['Trabajos'])
 
 
-def req_1(data_structs):
+def req_1(catalog, initialDate, finalDate): # REQUERIMIENTO 1 ------------------------------------------------------------------------------------
     """
-    Función que soluciona el requerimiento 1
+    Retorna lista de trabajos en un rago de fechas.
     """
     # TODO: Realizar el requerimiento 1
-    pass
+    lst = om.values(catalog["dateIndex"], initialDate, finalDate)
+    lst_flt = lt.newList('ARRAY_LIST', compareDates) #REVISAR CON Y SIN CMP - BUSCAR CAMBIOS EN FECHAS
+    for lstdate in lt.iterator(lst):
+        for job in lt.iterator(lstdate['lstjobs']):
+            skill_map = me.getValue(m.get(catalog['habilidades_id'], job['id']))
+            job['habilidades'] = skill_map['names']
+            lt.addLast(lst_flt, job)
+        
+    size = lt.size(lst_flt)
+    
+    if lst_flt != 0:
+        lst_flt = cus.sort(lst_flt, cmp_fecha_empresa) # REVISAR ALGORITMO DE SORT
+    
+    catalog['REQ1'] = lst_flt
+
+    return catalog, size
 
 
-def req_2(data_structs):
+def req_2(catalog, initialSalary, finalSalary): # REQUERIMIENTO 2 -------------------------------------------------------------------------------
     """
     Función que soluciona el requerimiento 2
     """
     # TODO: Realizar el requerimiento 2
-    pass
+    lst = om.values(catalog["salary_min"], initialSalary, finalSalary)
+    lst_flt = lt.newList('ARRAY_LIST', compareDates) #REVISAR CON Y SIN CMP - BUSCAR CAMBIOS EN FECHAS    
+    
+    for lstdate in lt.iterator(lst):
+        for row in lt.iterator(lstdate['row']):
+            id_map = me.getValue(m.get(catalog['mapa_id'], row['id']))
+            skill_map = me.getValue(m.get(catalog['habilidades_id'], row['id']))
+            
+            row['published_at'] = id_map['published_at']
+            row['title'] = id_map['title']
+            row['company_name'] = id_map['company_name']
+            row['experience_level'] = id_map['experience_level']
+            row['country_code'] = id_map['country_code']
+            row['city'] = id_map['city']
+            row['company_size'] = id_map['company_size']
+            row['workplace_type'] = id_map['workplace_type']
+            row['habilidades'] = skill_map['names']
+            #salary_from
+            lt.addLast(lst_flt, row) # Obtener los ID de trabajos que cumplen con el rango de salarios
+        
+    size = lt.size(lst_flt) # Numero de trabajos que cumplen 
+    
+    if lst_flt != 0:
+        lst_flt = cus.sort(lst_flt, cmp_req2) # REVISAR ALGORITMO DE SORT
+    catalog['REQ2'] = lst_flt
+
+    return catalog, size
 
 
-def req_3(data_structs):
+def req_3(catalog, country_code, experience_level, num):
     """
     Función que soluciona el requerimiento 3
     """
     # TODO: Realizar el requerimiento 3
-    pass
+    
+    filtered_jobs = lt.newList('ARRAY_LIST', compareDates)
+    country_jobs=om.valueSet(catalog["dateIndex"])
+
+    for date_entry in lt.iterator(country_jobs):
+        for job in lt.iterator(date_entry['lstjobs']):
+            if (job['country_code'] == country_code and job['experience_level'] == experience_level):
+                lt.addLast(filtered_jobs, job)
+
+    filtered_jobs = cus.sort(filtered_jobs, cmp_fecha_empresa)
+    total_jobs = lt.size(filtered_jobs)
+    selected_jobs = lt.subList(filtered_jobs, 1, num)
+    catalog['REQ3']=total_jobs,selected_jobs
+    
+    return catalog
 
 
-def req_4(data_structs):
+def req_4(catalog, city_name, location_type, num):
     """
     Función que soluciona el requerimiento 4
     """
     # TODO: Realizar el requerimiento 4
-    pass
+
+    
+    filtered_jobs = lt.newList('ARRAY_LIST', compareDates)
+    city_jobs=om.valueSet(catalog["dateIndex"])
+
+    for date_entry in lt.iterator(city_jobs):
+        for job in lt.iterator(date_entry['lstjobs']):
+            if (job['city'] == city_name  and job['workplace_type'] == location_type):
+                lt.addLast(filtered_jobs, job)
+
+    filtered_jobs = cus.sort(filtered_jobs, cmp_fecha_empresa)
+    total_jobs = lt.size(filtered_jobs)
+
+    selected_jobs = lt.subList(filtered_jobs, 1, num)
+    
+
+    return selected_jobs, total_jobs
 
 
-def req_5(data_structs):
+
+
+def req_5(catalog, initialSize, finalSize, skill, initialLim, finalLim): # REQUERIMIENTO 5 -------------------------------------------------------------------------------------------------------------
     """
     Función que soluciona el requerimiento 5
     """
     # TODO: Realizar el requerimiento 5
-    pass
+    
+    lst = om.values(catalog["sizeIndex"], initialSize, finalSize)
+    lst_flt = lt.newList('ARRAY_LIST', compareDates) #REVISAR CON Y SIN CMP - BUSCAR CAMBIOS EN FECHAS    
+    
+    for lstdate in lt.iterator(lst):
+        for row in lt.iterator(lstdate['row']):
+            employment_map = me.getValue(m.get(catalog['employment_types_id'], row['id']))
+            skill_map = me.getValue(m.get(catalog['habilidades_id'], row['id']))
+            for name in lt.iterator(skill_map['row']):
+                if ((skill == name['name']) and (int(name['level']) >= initialLim) and (int(name['level']) <= finalLim)):
+                    row['habilidades'] = skill_map['names']
+                    row['salary_from'] = employment_map['salary_from']
+                    lt.addLast(lst_flt, row) # Obtener los ID de trabajos que cumplen con el rango de tamano y habilidad
+        
+    size = lt.size(lst_flt) # Numero de trabajos que cumplen 
+    
+    if lst_flt != 0:
+        lst_flt = cus.sort(lst_flt, cmp_fecha_empresa) # REVISAR ALGORITMO DE SORT
+    catalog['REQ5'] = lst_flt
+
+    return catalog, size
 
 
-def req_6(data_structs):
+def req_6(catalog, initialDate, finalDate, initialSalary, finalSalary, num):
     """
     Función que soluciona el requerimiento 6
     """
     # TODO: Realizar el requerimiento 6
-    pass
+    lst = om.values(catalog["dateIndex"], initialDate, finalDate)
+    lst_flt = lt.newList('ARRAY_LIST', compareDates) #REVISAR CON Y SIN CMP - BUSCAR CAMBIOS EN FECHAS    ELIMINAR 
+    city_map = m.newMap(10000, maptype='CHAINING', loadfactor=4)
+    
+    for lstdate in lt.iterator(lst):
+        for row in lt.iterator(lstdate['lstjobs']):
+            employment_map = me.getValue(m.get(catalog['employment_types_id'], row['id']))
+            skill_map = me.getValue(m.get(catalog['habilidades_id'], row['id']))
+            if ((int(employment_map['salary_from']) >= initialSalary) and (int(employment_map['salary_from']) <= finalSalary)):
+                row['habilidades'] = skill_map['names']
+                row['salary_from'] = employment_map['salary_from']
+                
+                add_city(city_map, row['city'], row) # Diccionario
+                lt.addLast(lst_flt, row) # Obtener los ID de trabajos que cumplen con el rango de salarios ELIMINAR
+    
+    citiessize = m.size(city_map) # numero de ciudades que cumplen
+    cities = m.valueSet(city_map) # dic ciudades con los trabajos correspondientes adentro, que cumplen con salario y fecha
+    cities = merg.sort(cities, cmp_city_maps) #organizados por ciudades con mayor cantidad de empleos
+    cities = lt.subList(cities, 1, int(num)) # sublista con la cantidad de ciudades deseada a consultar
+    
+    jobs_city = lt.getElement(cities, 1)['jobs']
+    jobs_city = merg.sort(jobs_city, cmp_fecha_empresa)
+        
+    size = lt.size(lst_flt) # Numero de trabajos que cumplen 
+    
+    catalog['REQ6'] = jobs_city
+
+    return catalog, size, citiessize, cities
+# lista filtrada, numero de ofertas laborales que cumplen, numero de ciudades que cumplen, lista de NUM ciudades
 
 
-def req_7(data_structs):
+def add_city(map,city, job):
+    cities = map
+    existcity = m.contains(cities, city)
+    if existcity:
+        entry = m.get(cities, city)
+        citytemp = me.getValue(entry)
+    else:
+        citytemp = new_city(city)
+        m.put(cities, city, citytemp)
+    lt.addLast(citytemp['jobs'], job)  
+    citytemp['size'] = lt.size(citytemp['jobs'])
+
+def new_city(city_in):
+    city = {'city': "",
+               "jobs": None,
+               "size": 0}
+    city['city'] = city_in
+    city['jobs'] = lt.newList('ARRAY_LIST')  
+    return city 
+
+
+def req_7(data_structs, anio,cod_pais, propiedad):
     """
     Función que soluciona el requerimiento 7
     """
     # TODO: Realizar el requerimiento 7
-    pass
+    lst=om.valueSet(data_structs["dateIndex"])
 
 
 def req_8(data_structs):
@@ -346,6 +598,17 @@ def compareDates(date1, date2):
         return 1
     else:
         return -1
+    
+def compareSizes(date1, date2): # COMPLETAR
+    """
+    Compara dos fechas
+    """
+    if (date1 == date2):
+        return 0
+    elif (date1 > date2):
+        return 1
+    else:
+        return -1
 
 def compareSalary(date1, date2):
     """
@@ -394,11 +657,29 @@ def sort(list, cmp):
     #TODO: Crear función de ordenamiento
     return cus.sort(list, cmp)
 
-def cmp_fecha_empresa(oferta1, oferta2): #Criterio ordenamiento RQ 5 - Fecha mayor a menor, si igual, nombre de empresa de A-Z
+def cmp_fecha_empresa(oferta1, oferta2): #Criterio ordenamiento RQ 1 - Fecha mayor a menor, si igual, nombre de empresa de A-Z
     if (datetime.datetime.strptime(oferta1["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ") > datetime.datetime.strptime(oferta2["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ")):
         return True
     elif (datetime.datetime.strptime(oferta1["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ") == datetime.datetime.strptime(oferta2["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ")):
         if (oferta1["company_name"] <= oferta2["company_name"]):
+            return True
+        else: return False
+    else: return False
+
+def cmp_req2(oferta1, oferta2): #Criterio ordenamiento RQ 2 - 1) Salario Mayor a menor 2) Fecha reciente a viejo 
+    if (oferta1["salary_from"] > oferta2["salary_from"]):
+        return True
+    elif (oferta1["salary_from"] == oferta2["salary_from"]):
+        if (datetime.datetime.strptime(oferta1["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ") > datetime.datetime.strptime(oferta2["published_at"],"%Y-%m-%dT%H:%M:%S.%fZ")):
+            return True
+        else: return False
+    else: return False
+
+def cmp_city_maps(oferta1, oferta2):
+    if (oferta1['size'] > oferta2['size']):
+        return True
+    elif (oferta1['size'] == oferta2['size']):
+        if (oferta1['city'] > oferta2['city']):
             return True
         else: return False
     else: return False
