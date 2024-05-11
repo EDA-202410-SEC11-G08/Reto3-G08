@@ -178,7 +178,10 @@ def print_req_3(lst,size, mem):
     header = ['Publicacion','Titulo','Empresa','Experiencia','Pais', 'Ciudad', 'Tamano','Ubicacion', 'Habilidades']
     table.append(header)
     
-    imp1 = lt.subList(lst, 1, 5)
+    
+    imp1 = lst
+    
+
     
         
     for job in lt.iterator(imp1):
@@ -193,7 +196,7 @@ def print_req_3(lst,size, mem):
                               ])
                 
    
-    return table 
+    return table
     
     
     

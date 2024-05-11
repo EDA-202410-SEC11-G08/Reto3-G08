@@ -362,7 +362,7 @@ def req_2(catalog, initialSalary, finalSalary): # REQUERIMIENTO 2 --------------
     return catalog, size
 
 
-def req_3(catalog, country_code, experience_level, num):
+def  req_3(catalog, country_code, experience_level, num):
     """
     Función que soluciona el requerimiento 3
     """
